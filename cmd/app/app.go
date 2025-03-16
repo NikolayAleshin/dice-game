@@ -3,15 +3,14 @@ package app
 import (
 	"context"
 	"dice-game/pkg/config"
-	"dice-game/pkg/domain/interfaces"
 	"dice-game/pkg/domain/repository"
 	"dice-game/pkg/domain/service"
 	"dice-game/pkg/infrastructure/db"
 	"dice-game/pkg/infrastructure/grpc"
-	"dice-game/pkg/infrastructure/logger"
 	"dice-game/pkg/infrastructure/random"
 	"dice-game/pkg/usecase"
 	"fmt"
+	"github.com/rs/zerolog"
 	"net"
 	"os"
 	"os/signal"
@@ -26,15 +25,15 @@ import (
 
 type Application struct {
 	once          sync.Once
-	logger        interfaces.Logger
+	logger        *zerolog.Logger
 	config        *config.AppConfig
 	initialized   bool
 	configMutex   sync.Mutex
 	dataStore     repository.DataStore
 	grpcServer    *grpc.Server
-	randomService RandomServiceInterface
-	gameService   GameServiceInterface
-	gameUseCase   GameUseCaseInterface
+	randomService service.RandomServiceInterface
+	gameService   service.GameServiceInterface
+	gameUseCase   usecase.GameUseCaseInterface
 }
 
 func NewApplication() *Application {
@@ -47,8 +46,48 @@ func NewApplication() *Application {
 	return app
 }
 
-func createDefaultLogger() interfaces.Logger {
-	return logger.NewZerologAdapter("info", false)
+func NewZerologAdapter(level string, isJSON bool) *zerolog.Logger {
+	var zerologLevel zerolog.Level
+
+	switch level {
+	case "debug":
+		zerologLevel = zerolog.DebugLevel
+	case "info":
+		zerologLevel = zerolog.InfoLevel
+	case "warn":
+		zerologLevel = zerolog.WarnLevel
+	case "error":
+		zerologLevel = zerolog.ErrorLevel
+	default:
+		zerologLevel = zerolog.InfoLevel
+	}
+
+	var logger zerolog.Logger
+
+	if isJSON {
+		logger = zerolog.New(os.Stdout).
+			Level(zerologLevel).
+			With().
+			Timestamp().
+			Logger()
+	} else {
+		output := zerolog.ConsoleWriter{
+			Out:        os.Stdout,
+			TimeFormat: "2006-01-02T15:04:05Z07:00",
+		}
+
+		logger = zerolog.New(output).
+			Level(zerologLevel).
+			With().
+			Timestamp().
+			Logger()
+	}
+
+	return &logger
+}
+
+func createDefaultLogger() *zerolog.Logger {
+	return NewZerologAdapter("info", false)
 }
 
 func (a *Application) Run() {
@@ -198,7 +237,7 @@ func (a *Application) validateConfig() error {
 }
 
 func (a *Application) configureLogger() {
-	a.logger = logger.NewZerologAdapter(a.config.Log.Level, a.config.Log.JSON)
+	a.logger = NewZerologAdapter(a.config.Log.Level, a.config.Log.JSON)
 }
 
 func (a *Application) GetConfig() *config.AppConfig {
@@ -224,25 +263,35 @@ func (a *Application) Start(ctx context.Context) error {
 }
 
 func (a *Application) initDatabase(ctx context.Context) error {
-	var storageType db.StorageType
-	switch a.config.Database.Type {
-	case "postgres":
-		storageType = db.PostgreSQL
-	default:
-		storageType = db.PostgreSQL
-	}
 
-	a.dataStore = db.NewStore(storageType, a.config, a.logger)
+	a.dataStore = db.NewStore(a.config, a.logger)
 	if err := a.dataStore.Connect(ctx); err != nil {
 		a.logger.Error().Err(err).Msg("Failed to connect to database")
 		return errors.Wrap(err, "failed to connect to database")
 	}
 
 	if a.config.Database.RunMigrations {
-		if err := a.dataStore.RunMigrations(a.config.Database.MigrationsPath); err != nil {
-			a.logger.Error().Err(err).Msg("Failed to run database migrations")
+		migrationsPath := a.config.Database.MigrationsPath
+		if migrationsPath == "" {
+			migrationsPath = "migrations"
+			a.logger.Warn().Msg("Migrations path not set, using default: 'migrations'")
+		}
+
+		a.logger.Info().
+			Str("path", migrationsPath).
+			Msg("Running database migrations...")
+
+		if err := a.dataStore.RunMigrations(migrationsPath); err != nil {
+			a.logger.Error().
+				Err(err).
+				Str("path", migrationsPath).
+				Msg("Failed to run database migrations")
 			return errors.Wrap(err, "failed to run database migrations")
 		}
+
+		a.logger.Info().Msg("Database migrations completed successfully")
+	} else {
+		a.logger.Info().Msg("Database migrations skipped (disabled in config)")
 	}
 
 	return nil

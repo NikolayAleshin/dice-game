@@ -29,6 +29,11 @@ COPY --from=builder /go/bin/dice-game .
 COPY --from=builder /app/config.yaml /app/config/config.yaml
 COPY --from=builder /app/config.yaml /app/
 
+COPY --from=builder /app/migrations /app/migrations
+
+RUN mkdir -p /app/migrations
+COPY --from=builder /app/migrations/* /app/migrations/
+
 RUN adduser -D -g '' appuser
 RUN chown -R appuser:appuser /app
 USER appuser

@@ -2,9 +2,9 @@ package grpc
 
 import (
 	"context"
-	"dice-game/pkg/domain/interfaces"
 	"dice-game/pkg/usecase"
 	pb "dice-game/proto/gen"
+	"github.com/rs/zerolog"
 	"time"
 
 	"google.golang.org/grpc/codes"
@@ -14,10 +14,10 @@ import (
 type DiceGameService struct {
 	pb.UnimplementedDiceGameServiceServer
 	gameUseCase usecase.GameUseCaseInterface
-	logger      interfaces.Logger
+	logger      zerolog.Logger
 }
 
-func NewDiceGameService(gameUseCase usecase.GameUseCaseInterface, logger interfaces.Logger) *DiceGameService {
+func NewDiceGameService(gameUseCase usecase.GameUseCaseInterface, logger zerolog.Logger) *DiceGameService {
 	return &DiceGameService{
 		gameUseCase: gameUseCase,
 		logger:      logger.With().Str("component", "dice_game_grpc_service").Logger(),

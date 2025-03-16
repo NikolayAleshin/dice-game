@@ -1,56 +1,21 @@
-# Binaries for programs and plugins
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-bin/
-dist/
-
-# Test binary, built with `go test -c`
 *.test
 
-# Output of the go coverage tool
-*.out
-*.cov
-coverage.html
-
-# Dependency directories
-vendor/
-
-# IDE files
 .idea/
 .vscode/
 *.swp
 *.swo
 .DS_Store
 
-# Environment files
-.env
-.env.local
-.env.development
-.env.test
-.env.production
-
-# Log files
-logs/
-*.log
-
-# Generated files
 proto/gen/
 *.pb.go
 
-# Build files
 /dice-game
 /main
 
-# Docker volumes
 data/
 
-# Configuration files with secrets
 config.*.yaml
 config.*.yml
 !config.example.yaml
 
-# Debug files
 __debug_bin

@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"dice-game/pkg/config"
-	"dice-game/pkg/domain/interfaces"
 	"dice-game/pkg/domain/model"
 	"dice-game/pkg/domain/repository"
 	"fmt"
@@ -12,7 +11,9 @@ import (
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"sync"
 	"time"
 )
@@ -23,12 +24,12 @@ type PostgresStore struct {
 	sync.RWMutex
 	pool   *pgxpool.Pool
 	config *config.AppConfig
-	logger interfaces.Logger
+	logger zerolog.Logger
 
 	gameRepo *PostgresGameRepository
 }
 
-func NewPostgresStore(cfg *config.AppConfig, logger interfaces.Logger) *PostgresStore {
+func NewPostgresStore(cfg *config.AppConfig, logger *zerolog.Logger) *PostgresStore {
 	return &PostgresStore{
 		config: cfg,
 		logger: logger.With().Str("component", "postgresql-database").Logger(),
@@ -123,7 +124,7 @@ func (s *PostgresStore) RunMigrations(migrationsPath string) error {
 		)
 	}
 
-	db, err := sql.Open("postgresql", connString)
+	db, err := sql.Open("postgres", connString)
 	if err != nil {
 		return errors.Wrap(err, "failed to open database connection for migrations")
 	}
@@ -141,7 +142,7 @@ func (s *PostgresStore) RunMigrations(migrationsPath string) error {
 
 	m, err := migrate.NewWithDatabaseInstance(
 		fmt.Sprintf("file://%s", migrationsPath),
-		"postgresql", driver,
+		"postgres", driver,
 	)
 	if err != nil {
 		return errors.Wrap(err, "failed to create migrator")
@@ -199,7 +200,7 @@ func (s *PostgresStore) GetGameRepository() repository.GameRepository {
 
 type PostgresGameRepository struct {
 	pool   *pgxpool.Pool
-	logger interfaces.Logger
+	logger zerolog.Logger
 }
 
 var _ repository.GameRepository = (*PostgresGameRepository)(nil)

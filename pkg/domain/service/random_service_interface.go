@@ -1,6 +1,8 @@
 package service
 
-import "dice-game/pkg/infrastructure/random"
+import (
+	"dice-game/pkg/infrastructure/random"
+)
 
 type RandomServiceInterface interface {
 	GetRandomGenerator() (random.Generator, error)

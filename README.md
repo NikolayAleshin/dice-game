@@ -74,9 +74,7 @@
    -e POSTGRES_USER=postgresql \
    -e POSTGRES_PASSWORD=password123 \
    -e POSTGRES_DB=dice_game_db \
-   -v $(pwd)/scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql \
    postgres:14-alpine
-   eafbbaca5ba5defa80cdacda37b321eaeeaf4c86a340ce506c20e06e4f058868
 
    ```
 
@@ -87,7 +85,7 @@
 
 6. Запустите приложение:
    ```bash
-   go run cmd/server/main.go
+   go run cmd/main.go
    ```
 
 ## Использование

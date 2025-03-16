@@ -1,4 +1,3 @@
--- Create game_results table
 CREATE TABLE IF NOT EXISTS game_results (
                                             id SERIAL PRIMARY KEY,
                                             game_id VARCHAR(36) NOT NULL UNIQUE,
@@ -12,11 +11,9 @@ CREATE TABLE IF NOT EXISTS game_results (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                             );
 
--- Create index for faster queries
 CREATE INDEX IF NOT EXISTS idx_game_results_player_id ON game_results(player_id);
 CREATE INDEX IF NOT EXISTS idx_game_results_played_at ON game_results(played_at);
 
--- Create statistics table for analytics (optional)
 CREATE TABLE IF NOT EXISTS game_statistics (
                                                id SERIAL PRIMARY KEY,
                                                date DATE NOT NULL UNIQUE,
@@ -27,7 +24,6 @@ CREATE TABLE IF NOT EXISTS game_statistics (
                                                updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create verification records table (optional)
 CREATE TABLE IF NOT EXISTS verification_records (
                                                     id SERIAL PRIMARY KEY,
                                                     game_id VARCHAR(36) NOT NULL REFERENCES game_results(game_id),
@@ -36,7 +32,6 @@ CREATE TABLE IF NOT EXISTS verification_records (
     verified_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
                               );
 
--- Create trigger function to update statistics (optional)
 CREATE OR REPLACE FUNCTION update_game_statistics()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -44,7 +39,6 @@ game_date DATE;
 BEGIN
     game_date := DATE(NEW.played_at);
 
-    -- Try to update existing record for the date
 UPDATE game_statistics
 SET
     total_games = total_games + 1,
@@ -54,7 +48,6 @@ SET
     updated_at = CURRENT_TIMESTAMP
 WHERE date = game_date;
 
--- If no record exists for the date, insert a new one
 IF NOT FOUND THEN
         INSERT INTO game_statistics (
             date,
@@ -75,12 +68,10 @@ RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
--- Create trigger on game_results table (optional - comment out if not needed)
 CREATE TRIGGER trigger_update_game_statistics
     AFTER INSERT ON game_results
     FOR EACH ROW
     EXECUTE FUNCTION update_game_statistics();
 
--- Grant privileges
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO postgresql;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO postgresql;

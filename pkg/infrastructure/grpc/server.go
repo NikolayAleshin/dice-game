@@ -2,9 +2,9 @@ package grpc
 
 import (
 	"context"
-	"dice-game/pkg/domain/interfaces"
 	"dice-game/pkg/usecase"
 	pb "dice-game/proto/gen"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
@@ -14,12 +14,12 @@ import (
 
 type Server struct {
 	address     string
-	logger      interfaces.Logger
+	logger      zerolog.Logger
 	server      *grpc.Server
 	gameUseCase usecase.GameUseCaseInterface
 }
 
-func NewServer(address string, logger interfaces.Logger, gameUseCase usecase.GameUseCaseInterface) *Server {
+func NewServer(address string, logger *zerolog.Logger, gameUseCase usecase.GameUseCaseInterface) *Server {
 	return &Server{
 		address:     address,
 		logger:      logger.With().Str("component", "grpc_server").Logger(),

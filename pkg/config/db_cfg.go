@@ -14,7 +14,6 @@ type DatabaseConfig struct {
 	SSLMode        string `mapstructure:"ssl_mode"`
 	RunMigrations  bool   `mapstructure:"run_migrations"`
 	MigrationsPath string `mapstructure:"migrations_path"`
-	Type           string `mapstructure:"type"`
 }
 
 func (c *AppConfig) DatabaseURL() string {

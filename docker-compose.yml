@@ -18,6 +18,7 @@ services:
       - DICE_DATABASE_NAME=dice_game_db
       - DICE_DATABASE_SSL_MODE=disable
       - DICE_DATABASE_RUN_MIGRATIONS=true
+      - DICE_DATABASE_MIGRATIONS_PATH=/app/migrations
       - DICE_GRPC_HOST=0.0.0.0
       - DICE_GRPC_PORT=9090
       - DICE_HTTP_HOST=0.0.0.0
@@ -27,6 +28,7 @@ services:
       - DICE_GAME_ENABLE_VERIFICATION=true
     volumes:
       - ./config:/app/config
+      - ./migrations:/app/migrations
     depends_on:
       postgres:
         condition: service_healthy
@@ -45,7 +47,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres-dice-data:/var/lib/postgresql/data
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - dice-game-network
     healthcheck:

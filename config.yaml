@@ -26,6 +26,8 @@ database:
   max_open_conns: 25
   max_idle_conns: 10
   conn_max_lifetime: "15m"
+  run_migrations: true
+  migrations_path: "migrations"
 
 game:
   verification_enabled: true
