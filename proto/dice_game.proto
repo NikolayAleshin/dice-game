@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package dice_game;
+
+option go_package = "dice-game/proto/gen;pb";
+
+service DiceGameService {
+  rpc Play(PlayRequest) returns (PlayResponse);
+
+  rpc Verify(VerifyRequest) returns (VerifyResponse);
+}
+
+enum Winner {
+  DRAW = 0;
+  PLAYER = 1;
+  SERVER = 2;
+}
+
+message PlayRequest {
+  string player_id = 1;
+}
+
+message PlayResponse {
+  string game_id = 1;
+  int32 player_dice = 2;
+  int32 server_dice = 3;
+  string winner = 4;
+  string played_at = 5;
+  string generator_used = 6;
+  string verification_key = 7;
+}
+
+message VerifyRequest {
+  string game_id = 1;
+  string verification_data = 2;
+}
+
+message VerifyResponse {
+  string game_id = 1;
+  bool is_valid = 2;
+}

@@ -1,0 +1,62 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dice-game-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"  # HTTP
+      - "9090:9090"  # gRPC
+    environment:
+      - DICE_ENVIRONMENT=development
+      - DICE_DATABASE_TYPE=postgres
+      - DICE_DATABASE_HOST=postgres
+      - DICE_DATABASE_PORT=5432
+      - DICE_DATABASE_USER=postgresql
+      - DICE_DATABASE_PASSWORD=password123
+      - DICE_DATABASE_NAME=dice_game_db
+      - DICE_DATABASE_SSL_MODE=disable
+      - DICE_DATABASE_RUN_MIGRATIONS=true
+      - DICE_GRPC_HOST=0.0.0.0
+      - DICE_GRPC_PORT=9090
+      - DICE_HTTP_HOST=0.0.0.0
+      - DICE_HTTP_PORT=8080
+      - DICE_LOG_LEVEL=debug
+      - DICE_LOG_JSON=false
+      - DICE_GAME_ENABLE_VERIFICATION=true
+    volumes:
+      - ./config:/app/config
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - dice-game-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: dice-game-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgresql
+      - POSTGRES_PASSWORD=password123
+      - POSTGRES_DB=dice_game_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-dice-data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - dice-game-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgresql -d dice_game_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-dice-data:
+
+networks:
+  dice-game-network:
+    driver: bridge
